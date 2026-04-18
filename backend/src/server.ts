@@ -3,8 +3,20 @@ import type { RowDataPacket, ResultSetHeader } from "mysql2";
 
 async function createTables() {
   try {
+    // Verificar si la tabla existe
+    const [tables] = await db.query<any[]>(
+      "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'packages'"
+    );
+
+    // Si la tabla existe, eliminarla para recrearla con la estructura correcta
+    if (tables.length > 0) {
+      await db.query("DROP TABLE IF EXISTS packages");
+      console.log("Tabla 'packages' antigua eliminada.");
+    }
+
+    // Crear la tabla con la estructura correcta
     await db.query(`
-      CREATE TABLE IF NOT EXISTS packages (
+      CREATE TABLE packages (
         id INT AUTO_INCREMENT PRIMARY KEY,
         recipient_name VARCHAR(255) NOT NULL,
         apartment_number VARCHAR(50) NOT NULL,
@@ -15,7 +27,7 @@ async function createTables() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    console.log("Tabla 'packages' creada o ya existe.");
+    console.log("✅ Tabla 'packages' creada exitosamente.");
   } catch (error) {
     console.error("Error creando tabla:", error);
   }
